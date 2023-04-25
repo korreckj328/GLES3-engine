@@ -3,18 +3,12 @@ project(simple-game-engine)
 
 set(CMAKE_CXX_STANDARD 14)
 
-if (NOT APPLE) 
-        find_package(OpenGL)
-endif()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
-find_package(GLEW)
+find_package(OpenGLES REQUIRED V3)
 
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(glfw)
-include_directories("${CMAKE_SOURCE_DIR}/glfw/include")
+add_subdirectory(sdl)
+include_directories("${CMAKE_SOURCE_DIR}/sdl/include")
 
 file(GLOB PROJECT_SOURCES src/*.h
                           src/*.cpp
@@ -23,12 +17,10 @@ file(GLOB PROJECT_SOURCES src/*.h
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
-if (NOT APPLE) 
-        target_link_libraries(${PROJECT_NAME} OpenGL)
-endif()
 
-target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
-target_link_libraries(${PROJECT_NAME} glfw)
+target_link_libraries(${PROJECT_NAME} OpenGLES::OpenGLESv3)
+
+# target_link_libraries(${PROJECT_NAME} sdl)
 
 set (source "${CMAKE_SOURCE_DIR}/Assets")
 
