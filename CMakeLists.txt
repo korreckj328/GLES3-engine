@@ -7,8 +7,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
 find_package(OpenGLES REQUIRED V3)
 
-add_subdirectory(sdl)
-include_directories("${CMAKE_SOURCE_DIR}/sdl/include")
+add_subdirectory(SDL)
+include_directories("${CMAKE_SOURCE_DIR}/SDL/include")
 
 file(GLOB PROJECT_SOURCES src/*.h
                           src/*.cpp
@@ -20,7 +20,7 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} OpenGLES::OpenGLESv3)
 
-# target_link_libraries(${PROJECT_NAME} sdl)
+target_link_libraries(${PROJECT_NAME} SDL2main SDL2-static)
 
 set (source "${CMAKE_SOURCE_DIR}/Assets")
 

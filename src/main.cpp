@@ -7,8 +7,8 @@ single board arm devices that can usually run desktop gl 2.1.
 
 #include <iostream>
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengles2.h>
+#include <SDL.h>
+#include <SDL_opengles2.h>
 #include <GLES3/gl3.h>
 #include <cstdio>
 #include <cstdlib>
@@ -50,7 +50,7 @@ int main() {
                                 SDL_WINDOWPOS_UNDEFINED, 
                                 DISP_WIDTH, 
                                 DISP_HEIGHT, 
-                                SDL_WINDOW_OPENGL);
+                                SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     if (!window) { 
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, 
                                 "Error",
@@ -79,7 +79,7 @@ int main() {
     while (!quit) {
         SDL_Event event;
         if (SDL_WaitEvent(&event) != 0) { 
-            if (event.type == SDL_EVENT_QUIT) {
+            if (event.type == SDL_QUIT) {
                 // User wants to quit
                 quit = true; 
             }
