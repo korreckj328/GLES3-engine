@@ -1,8 +1,6 @@
 /*
-About: This is a simple OpenGL engine that is targeting destop gl 2.1,
-however it will only use features that are available in OpenGL ES 2.0.
-Hopefully this will allow it to easily run on desktops and a wide variety of 
-single board arm devices that can usually run desktop gl 2.1.
+About: This is a simple OpenGL engine that is targeting destop GLES 3.0
+This program is intended to run on arm SBC's that directly expose a GLES driver
 */
 
 #include <iostream>
