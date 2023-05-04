@@ -11,8 +11,55 @@ This program is intended to run on arm SBC's that directly expose a GLES driver
 #include <cstdio>
 #include <cstdlib>
 
+#include "Shader.h"
+
 const unsigned int DISP_WIDTH = 640; 
 const unsigned int DISP_HEIGHT = 480;
+
+
+typedef struct Vertex_s {
+	float position[2];
+} Vertex;
+
+bool quit = false;
+SDL_Event e;
+
+GLuint vboCreate(const Vertex *vertices, GLuint numVertices) {
+	GLuint vbo;
+	int nBuffers = 1;
+	glGenBuffers(nBuffers, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, 
+			sizeof(Vertex) * numVertices, 
+			vertices, 
+			GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	GLenum err = glGetError();
+	if (err != GL_NO_ERROR) {
+		glDeleteBuffers(nBuffers, &vbo);
+		SDL_Log("creating vbo failed, code: %u\n", err);
+		vbo = 0;
+	}
+
+	return vbo;
+}
+
+
+void vboFree(GLuint vbo) {
+	glDeleteBuffers(1, &vbo);
+}
+
+void handleInput() {
+	//Handle events on queue
+    while( SDL_PollEvent( &e ) != 0 ) {
+        //User requests quit
+        if( e.type == SDL_QUIT )
+        {
+            quit = true;
+        }
+    }
+}
 
 
 int main() {
@@ -27,7 +74,7 @@ int main() {
     }
 
     // setup the exit hook
-    atexit(SDL_Quit);
+    // atexit(SDL_Quit);
 
     // init sdl
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -72,17 +119,49 @@ int main() {
     // Update the window
     SDL_GL_SwapWindow(window);
 
-    // Wait for the user to quit
-    bool quit = false; 
-    while (!quit) {
-        SDL_Event event;
-        if (SDL_WaitEvent(&event) != 0) { 
-            if (event.type == SDL_QUIT) {
-                // User wants to quit
-                quit = true; 
-            }
-        } 
-    }
+	GLuint shaderProg = shaderProgLoad("Assets/Shaders/Simple2D.vert.glsl", 
+			"Assets/Shaders/Simple2D.frag.glsl");
+
+	if(!shaderProg) {
+		return EXIT_FAILURE;
+	}
+
+	glUseProgram(shaderProg);
+
+	const Vertex vertices[] = {
+		{0.0f, -0.9f},
+		{0.9f, 0.9f},
+		{-0.9f, 0.9f}
+	};
+
+	GLsizei vertSize = sizeof(vertices[0]);
+	GLsizei numVertices = sizeof(vertices) / vertSize;
+	GLuint triangleVBO = vboCreate(vertices, numVertices);
+	if(!triangleVBO) {
+		return EXIT_FAILURE;
+	}
+	
+	while (!quit) {
+		handleInput();
+		GLuint positionIdx = 0;
+		glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+		glVertexAttribPointer(positionIdx, 
+				2, 
+				GL_FLOAT, 
+				GL_FALSE, 
+				sizeof(Vertex), 
+				(const GLvoid*)0);
+		glEnableVertexAttribArray(positionIdx);
+
+		glDrawArrays(GL_TRIANGLES, 0, numVertices);
+		SDL_GL_SwapWindow(window);
+	} 
+	
+	vboFree(triangleVBO);
+	triangleVBO = 0;
+
+	shaderProgDestroy(shaderProg);
+	shaderProg = 0;
 
     return 0;
 }
