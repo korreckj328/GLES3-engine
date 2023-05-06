@@ -12,6 +12,7 @@ This program is intended to run on arm SBC's that directly expose a GLES driver
 #include <cstdlib>
 
 #include "Shader.h"
+#include "Texture.h"
 
 const unsigned int DISP_WIDTH = 640; 
 const unsigned int DISP_HEIGHT = 480;
@@ -19,6 +20,7 @@ const unsigned int DISP_HEIGHT = 480;
 
 typedef struct Vertex_s {
 	float position[2];
+	float texCoord[2];
 } Vertex;
 
 bool quit = false;
@@ -119,20 +121,33 @@ int main() {
     // Update the window
     SDL_GL_SwapWindow(window);
 
-	GLuint shaderProg = shaderProgLoad("Assets/Shaders/Simple2D.vert.glsl", 
-			"Assets/Shaders/Simple2D.frag.glsl");
+	// Load the textures 
+	GLuint texture = texLoad("Assets/Textures/crate1/crate1_diffuse.png");
+	if (!texture) {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, 
+				"Error", 
+				"Couldn't Load Texture", 
+				NULL);
+		return EXIT_FAILURE;
+	}
+
+	
+
+	GLuint shaderProg = shaderProgLoad("Assets/Shaders/Texture.vert", 
+			"Assets/Shaders/Texture.frag");
 
 	if(!shaderProg) {
 		return EXIT_FAILURE;
 	}
 
+
 	glUseProgram(shaderProg);
 
 	const Vertex vertices[] = {
-		{0.0f, -0.9f},
-		{0.9f, 0.9f},
-		{-0.9f, 0.9f}
-	};
+		{{-0.9f, -0.9f}, {0.0f, 0.0f}},
+		{{0.9f, -0.9f}, {1.0f, 0.0f}},
+		{{0.9f, 0.9f}, {1.0f, 1.0f}},
+		{{-0.9f, 0.9f}, {0.0f, 1.0f}}};
 
 	GLsizei vertSize = sizeof(vertices[0]);
 	GLsizei numVertices = sizeof(vertices) / vertSize;
@@ -140,6 +155,16 @@ int main() {
 	if(!triangleVBO) {
 		return EXIT_FAILURE;
 	}
+	// bind the texture to unit 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// bind texsampler to unit 0
+	GLint texSamplerUniformLoc = glGetUniformLocation(shaderProg, "texSampler");
+	if (texSamplerUniformLoc < 0) {
+		SDL_Log("Error: couldn't get texSampler's location.\n");
+		return EXIT_FAILURE;
+	}
+	glUniform1i(texSamplerUniformLoc, 0);
 	
 	while (!quit) {
 		handleInput();
@@ -153,7 +178,16 @@ int main() {
 				(const GLvoid*)0);
 		glEnableVertexAttribArray(positionIdx);
 
-		glDrawArrays(GL_TRIANGLES, 0, numVertices);
+		GLuint texCoordIdx = 1;
+		glVertexAttribPointer(texCoordIdx, 
+				2, 
+				GL_FLOAT, 
+				GL_FALSE, 
+				sizeof(Vertex), 
+				(const GLvoid*)offsetof(Vertex, texCoord));
+		glEnableVertexAttribArray(texCoordIdx);
+
+		glDrawArrays(GL_TRIANGLE_FAN, 0, numVertices);
 		SDL_GL_SwapWindow(window);
 	} 
 	
@@ -162,6 +196,9 @@ int main() {
 
 	shaderProgDestroy(shaderProg);
 	shaderProg = 0;
+
+	texDestroy(texture);
+	texture = 0;
 
     return 0;
 }
